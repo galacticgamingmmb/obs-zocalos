@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=1920, initial-scale=1">
+<title>Overlay</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:transparent;font-family:Arial,Helvetica,sans-serif}
+.frame{position:absolute;inset:0;width:1920px;height:1080px;pointer-events:none}
+#lower{position:absolute;left:82px;right:82px;bottom:82px;height:174px;display:flex;align-items:stretch;opacity:0;transform:translateY(28px);transition:opacity .35s ease,transform .45s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+#lower.show{opacity:1;transform:translateY(0)}
+.panel{position:relative;flex:1;background:linear-gradient(105deg,rgba(4,65,112,.96),rgba(5,112,177,.93));border-left:9px solid #f4c66b;border-radius:5px 16px 16px 5px;padding:23px 36px 20px 38px;box-shadow:0 10px 32px #001c35aa;overflow:hidden}
+.panel:after{content:"";position:absolute;right:-45px;top:-85px;width:260px;height:260px;border:2px solid #ffffff24;transform:rotate(35deg);border-radius:24px}
+.kicker{font-size:19px;font-weight:700;letter-spacing:3px;color:#ffd98b;text-transform:uppercase;margin-bottom:7px}
+.kicker:empty{display:none}
+#name{font-size:43px;line-height:1.04;font-weight:800;color:white;text-shadow:0 2px 5px #00274466}
+#role{font-size:23px;color:#e6f5ff;margin-top:7px;font-weight:500}
+#quote{max-width:1480px;color:white;font-size:23px;font-style:italic;margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.accent{width:14px;background:linear-gradient(#ffe0a0,#e7a83e);margin-left:7px;border-radius:8px;box-shadow:0 0 20px #f4c66b88}
+</style></head><body>
+<svg class="frame" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+<defs><mask id="cut"><rect width="1920" height="1080" fill="white"/><rect x="48" y="42" width="1824" height="996" rx="18" fill="black"/></mask></defs>
+<image href="assets/fondo-evento.png" x="0" y="0" width="1920" height="1080" preserveAspectRatio="none" mask="url(#cut)"/>
+<rect x="48" y="42" width="1824" height="996" rx="18" fill="none" stroke="#f4c66b" stroke-width="4"/>
+<rect x="56" y="50" width="1808" height="980" rx="13" fill="none" stroke="#087bc4" stroke-width="3"/>
+<path d="M48 160V60Q48 42 66 42H260 M1660 42H1854Q1872 42 1872 60V160 M48 920V1020Q48 1038 66 1038H260 M1660 1038H1854Q1872 1038 1872 1020V920" fill="none" stroke="#ffffff" stroke-opacity=".8" stroke-width="3"/>
+</svg>
+<div id="lower"><div class="panel"><div class="kicker" id="label"></div><div id="name"></div><div id="role"></div><div id="quote"></div></div><div class="accent"></div></div>
+<script src="sync.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const room=new URLSearchParams(location.search).get('room')||'';
+Sync.subscribe(s=>{
+  $('label').textContent=s.label||'';$('name').textContent=s.name||'';$('role').textContent=s.role||'';
+  $('quote').textContent=s.quote?'“'+s.quote+'”':'';
+  $('lower').classList.toggle('show',!!s.visible&&!!(s.name||s.role||s.quote));
+},room);
+</script></body></html>

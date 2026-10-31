@@ -1,0 +1,106 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Control de zócalos · Evento</title><style>
+*{box-sizing:border-box}body{margin:0;background:#edf4f8;color:#17324a;font-family:Arial,sans-serif;padding:20px}
+main{max-width:820px;margin:auto;background:white;border-radius:18px;padding:28px;box-shadow:0 12px 40px #17324a18}
+h1{margin:0 0 6px;font-size:27px}p{color:#5b7285;line-height:1.5}.tag{display:inline-block;background:#e6f4fc;color:#075b91;padding:7px 11px;border-radius:20px;font-size:12px;font-weight:bold;margin:10px 0 10px}
+label{display:block;font-size:13px;font-weight:bold;margin:16px 0 7px}input,textarea{width:100%;border:1px solid #c8d8e3;border-radius:9px;padding:12px;font:16px Arial;color:#17324a}textarea{min-height:90px;resize:vertical}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.chip{background:#e6f4fc;color:#075b91;padding:6px 11px;border-radius:16px;font-size:13px;font-weight:bold;cursor:pointer;border:0}.chip:hover{background:#cfe8f8}.chip.x{background:#f3e3e3;color:#8a3030}
+.preview{margin:20px 0;background:linear-gradient(105deg,#044170,#0570b1);border-left:7px solid #f4c66b;border-radius:7px;padding:18px 20px;color:white}.preview small{color:#ffd98b;letter-spacing:2px;font-weight:bold;text-transform:uppercase}.preview h2{margin:7px 0 4px;font-size:25px}.preview div{color:#e6f5ff}.preview blockquote{margin:10px 0 0;font-style:italic}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}button.b{border:0;border-radius:9px;padding:13px 18px;font-weight:bold;font-size:14px;cursor:pointer}
+.primary{background:#087bc4;color:white}.secondary{background:#e6f0f6;color:#174765}.danger{background:#fff0e8;color:#9a431b}.status{margin-top:14px;font-size:13px;color:#587184}
+details{margin-top:24px;border-top:1px solid #dde8ef;padding-top:14px}summary{cursor:pointer;font-weight:bold}code{background:#eef4f8;padding:2px 6px;border-radius:5px;word-break:break-all}
+.saved h3{margin:26px 0 4px;font-size:18px}.saved small{color:#5b7285}
+.item{display:flex;align-items:center;gap:10px;border:1px solid #c8d8e3;border-left:6px solid #f4c66b;border-radius:9px;padding:10px 12px;margin-top:8px;cursor:pointer;user-select:none;background:#fafcfd}
+.item:hover{background:#eef6fb}.item.live{border-left-color:#2a9d4a;background:#e9f7ee}.item .t{flex:1;min-width:0}.item .l{font-size:11px;font-weight:bold;letter-spacing:1.5px;color:#a8741c;text-transform:uppercase}.item .n{font-weight:bold}.item .r{font-size:13px;color:#5b7285;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item button{border:0;background:#e6f0f6;border-radius:7px;padding:7px 10px;cursor:pointer;font-weight:bold;color:#174765}.item button.go{background:#087bc4;color:white}
+.row{display:flex;gap:8px}.row input{flex:1}.live{display:inline-block;width:10px;height:10px;border-radius:50%;background:#bbb;margin-right:6px}.live.on{background:#2a9d4a}
+</style></head><body><main><h1>Control de zócalos</h1><p>Editá los datos y publicalos en pantalla. Los cambios se reflejan en OBS al instante.</p><span class="tag">EVENTO · FULL HD 1920 × 1080</span>
+<label for="label">Rótulo (el texto pequeño de arriba)</label><input id="label" list="labels" placeholder="Ej. Disertante">
+<datalist id="labels"></datalist>
+<div class="chips" id="chips"></div>
+<label for="name">Nombre de la persona</label><input id="name" placeholder="Ej. Juan Pérez">
+<label for="role">Cargo / descripción</label><input id="role" placeholder="Ej. Pastor · Orador invitado">
+<label for="quote">Frase o cita (opcional)</label><textarea id="quote" placeholder="Escribí aquí una frase..."></textarea>
+<div class="preview"><small id="pl">Disertante</small><h2 id="pn"></h2><div id="pr"></div><blockquote id="pq"></blockquote></div>
+<div class="actions"><button class="b primary" onclick="publish(true)">PUBLICAR ZÓCALO</button><button class="b secondary" onclick="publish(false)">OCULTAR</button><button class="b danger" onclick="clearAll()">LIMPIAR DATOS</button><button class="b secondary" onclick="saveCurrent()">💾 GUARDAR PARA DESPUÉS</button></div><div class="status" id="status">Listo.</div>
+
+<section class="saved"><h3>Zócalos guardados</h3><small>Un clic = cargar en el editor · doble clic (o ▶) = enviar al aire.</small><div id="list"></div>
+<div class="actions"><button class="b secondary" onclick="exportList()">Exportar</button><button class="b secondary" onclick="el('imp').click()">Importar</button><input type="file" id="imp" accept=".json" hidden></div></section>
+<details id="setup"><summary>Conexión con OBS</summary>
+<p><b>Opción A (recomendada, sin internet): panel dentro de OBS.</b> Menú <i>Docks → Docks de navegador personalizados</i>, agregá este panel con su URL. Como el dock y la fuente de navegador comparten el mismo perfil de OBS, se sincronizan solos.</p>
+<p><b>Opción B (por internet):</b> controlá desde cualquier dispositivo. Ambos lados usan el mismo código de sala (relé gratuito ntfy.sh; quien conozca el código puede mandar zócalos, así que no lo compartas).</p>
+<label for="room">Código de sala</label>
+<div class="row"><input id="room" placeholder="vacío = solo este navegador / dock de OBS"><button class="b secondary" onclick="genRoom()">Generar</button></div>
+<p><span class="live" id="live"></span><span id="livet">Sin relé en internet</span></p>
+<label>URL de la fuente de navegador en OBS (1920 × 1080)</label><p><code id="ourl"></code></p>
+<div class="actions"><button class="b secondary" onclick="copyUrl()">Copiar URL del overlay</button></div>
+</details>
+</main><script src="sync.js"></script><script>
+const el=id=>document.getElementById(id);
+const store={get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let labels=store.get('zocalos_labels',null)||['Disertante','Orador','Bautismo','Cantantes','Parte especial','Oración','Lectura bíblica','Anuncios','Bienvenida','Testimonio'];
+function renderLabels(){
+  el('labels').innerHTML=labels.map(l=>`<option value="${l.replace(/"/g,'&quot;')}">`).join('');
+  el('chips').innerHTML='';
+  labels.forEach(l=>{const b=document.createElement('button');b.className='chip';b.textContent=l;b.onclick=()=>{el('label').value=l;preview()};el('chips').appendChild(b)});
+  const add=document.createElement('button');add.className='chip';add.textContent='＋ guardar rótulo actual';add.onclick=()=>{const v=el('label').value.trim();if(v&&!labels.includes(v)){labels.push(v);store.set('zocalos_labels',labels);renderLabels()}};el('chips').appendChild(add);
+  const del=document.createElement('button');del.className='chip x';del.textContent='✕ quitar rótulo actual';del.onclick=()=>{labels=labels.filter(x=>x!==el('label').value.trim());store.set('zocalos_labels',labels);renderLabels()};el('chips').appendChild(del);
+}
+function preview(){
+  el('pl').textContent=el('label').value;el('pl').style.display=el('label').value?'':'none';
+  el('pn').textContent=el('name').value||'Nombre de la persona';el('pr').textContent=el('role').value||'Cargo / descripción';
+  el('pq').textContent=el('quote').value?'“'+el('quote').value+'”':'';
+}
+['label','name','role','quote'].forEach(id=>el(id).addEventListener('input',preview));
+const roomVal=()=>el('room').value.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+const FIELDS=['label','name','role','quote'];
+let saved=store.get('zocalos_saved',[]),liveId=null;
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function persist(){store.set('zocalos_saved',saved);renderSaved()}
+function renderSaved(){
+  el('list').innerHTML=saved.length?'':'<p>Todavía no hay zócalos guardados.</p>';
+  saved.forEach((z,i)=>{
+    const d=document.createElement('div');d.className='item'+(z.id===liveId?' live':'');
+    d.innerHTML=`<div class="t"><div class="l">${esc(z.label||'')}</div><div class="n">${esc(z.name||'(sin nombre)')}</div><div class="r">${esc(z.role||'')}</div></div><button title="Subir">↑</button><button title="Bajar">↓</button><button title="Borrar">🗑</button><button class="go" title="Enviar al aire">▶</button>`;
+    const [up,dn,del,go]=d.querySelectorAll('button');
+    up.onclick=e=>{e.stopPropagation();if(i>0){[saved[i-1],saved[i]]=[saved[i],saved[i-1]];persist()}};
+    dn.onclick=e=>{e.stopPropagation();if(i<saved.length-1){[saved[i+1],saved[i]]=[saved[i],saved[i+1]];persist()}};
+    del.onclick=e=>{e.stopPropagation();if(confirm('¿Borrar este zócalo guardado?')){saved.splice(i,1);persist()}};
+    go.onclick=e=>{e.stopPropagation();goLive(z)};
+    d.onclick=()=>{FIELDS.forEach(f=>el(f).value=z[f]||'');preview();el('status').textContent='Cargado en el editor (no está al aire).'};
+    d.ondblclick=()=>goLive(z);
+    el('list').appendChild(d);
+  });
+}
+function saveCurrent(){
+  if(!el('name').value.trim()&&!el('role').value.trim()&&!el('quote').value.trim()){el('status').textContent='Nada para guardar.';return}
+  const z={id:Date.now().toString(36)};FIELDS.forEach(f=>z[f]=el(f).value);
+  saved.push(z);persist();el('status').textContent='Guardado para después.';
+}
+async function goLive(z){FIELDS.forEach(f=>el(f).value=z[f]||'');preview();liveId=z.id;renderSaved();await publish(true)}
+function exportList(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(saved,null,1)],{type:'application/json'}));a.download='zocalos-guardados.json';a.click()}
+el('imp').onchange=async e=>{try{const l=JSON.parse(await e.target.files[0].text());if(!Array.isArray(l))throw 0;saved=saved.concat(l.map(z=>({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),label:z.label||'',name:z.name||'',role:z.role||'',quote:z.quote||''})));persist();el('status').textContent='Importados '+l.length+' zócalos.'}catch(x){el('status').textContent='Archivo inválido.'}e.target.value=''};
+async function publish(v){
+  if(!v){liveId=null;renderSaved()}
+  const room=roomVal();
+  const ok=await Sync.publish({label:el('label').value,name:el('name').value,role:el('role').value,quote:el('quote').value,visible:v},room);
+  el('status').textContent=(ok?'Enviado: ':'Enviado localmente, falló el relé de internet: ')+(v?'zócalo visible.':'zócalo oculto.');
+}
+function clearAll(){liveId=null;renderSaved();['name','role','quote'].forEach(id=>el(id).value='');preview();publish(false)}
+function overlayUrl(){const u=new URL('overlay.html',location.href);u.search='';const r=roomVal();if(r)u.searchParams.set('room',r);return u.href}
+function updateUrl(){el('ourl').textContent=overlayUrl();store.set('zocalos_room',roomVal());watchNet()}
+function genRoom(){el('room').value=Sync.newRoom();updateUrl()}
+function copyUrl(){navigator.clipboard&&navigator.clipboard.writeText(overlayUrl()).then(()=>el('status').textContent='URL copiada.')}
+let es;function watchNet(){
+  es&&es.close();const r=roomVal();el('live').className='live';
+  if(!r){el('livet').textContent='Sin relé en internet';return}
+  el('livet').textContent='Conectando…';
+  es=new EventSource('https://ntfy.sh/zocalos-'+r+'/sse?since=0');
+  es.onopen=()=>{el('live').className='live on';el('livet').textContent='Relé conectado (sala '+r+')'};
+  es.onerror=()=>{el('live').className='live';el('livet').textContent='Relé sin conexión (reintentando)'};
+}
+el('room').addEventListener('change',updateUrl);
+const s=Sync.load();['label','name','role','quote'].forEach(id=>el(id).value=s[id]||'');
+const q=new URLSearchParams(location.search).get('room');el('room').value=q||store.get('zocalos_room','')||'';
+renderLabels();renderSaved();preview();updateUrl();
+</script></body></html>
